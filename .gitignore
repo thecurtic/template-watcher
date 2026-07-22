@@ -17,6 +17,15 @@ dist-ssr
 .ai/
 yarn.lock
 
+# Build / tooling caches
+.vite
+.cache
+coverage
+*.tgz
+
+# Test output
+test-results
+
 # Editor directories and files
 .idea
 .DS_Store
@@ -25,6 +34,9 @@ yarn.lock
 *.njsproj
 *.sln
 *.sw?
+.vscode/*
+!.vscode/extensions.json
+Thumbs.db
 
 # Vercel
 .vercel
