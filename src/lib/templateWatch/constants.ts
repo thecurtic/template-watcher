@@ -1,5 +1,8 @@
 export const MEMPOOL_BASE_URL = 'https://mempool.kilombino.com';
 
+/** Bumped whenever we ship a change worth confirming reached the device. */
+export const BUILD_STAMP = 'diag-1';
+
 /** Height at which mandatory BIP-110 signaling begins (~Aug 7, 2026). */
 export const MANDATORY_SIGNALING_HEIGHT = 961_632;
 

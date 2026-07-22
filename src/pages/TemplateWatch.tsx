@@ -2,6 +2,7 @@ import { useSeoMeta } from '@unhead/react';
 import { Activity } from 'lucide-react';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { useTemplateWatch } from '@/hooks/useTemplateWatch';
+import { BUILD_STAMP } from '@/lib/templateWatch/constants';
 import { WatchFeed } from '@/components/templateWatch/WatchFeed';
 import { PoolMatrix } from '@/components/templateWatch/PoolMatrix';
 import { TrendChart } from '@/components/templateWatch/TrendChart';
@@ -33,6 +34,7 @@ export default function TemplateWatch() {
     backfillProgress,
     offline,
     loadError,
+    fetchMode,
     lastChecked,
     refresh,
   } = useTemplateWatch();
@@ -64,6 +66,26 @@ export default function TemplateWatch() {
             <LoginArea className="max-w-60" />
           </div>
         </header>
+
+        {/* Always-visible diagnostics (readable without DevTools, e.g. on iPad) */}
+        <div className="tw-tnum mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-[var(--tw-border)] bg-[var(--tw-bg-elev)] px-3 py-2 text-[11px] text-[var(--tw-muted)]">
+          <span>build:{BUILD_STAMP}</span>
+          <span>·</span>
+          <span>{loading ? 'loading…' : 'idle'}</span>
+          <span>·</span>
+          <span>fetch:{fetchMode}</span>
+          <span>·</span>
+          <span>blocks:{totalBlocks.toLocaleString()}</span>
+          <span>·</span>
+          <span>{loadError ? `error: ${loadError}` : 'no errors'}</span>
+          <button
+            type="button"
+            onClick={refresh}
+            className="ml-auto rounded border border-[var(--tw-border)] px-2 py-0.5 font-medium hover:border-[var(--tw-accent-dim)] hover:text-[var(--tw-accent)]"
+          >
+            reload data
+          </button>
+        </div>
 
         {/* Status banners */}
         <div className="mb-8 space-y-2">

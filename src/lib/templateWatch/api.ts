@@ -8,6 +8,16 @@ import {
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Which network path last succeeded — surfaced in the on-screen diagnostics so
+ * issues can be debugged on devices without DevTools (e.g. iPad Safari).
+ */
+export type FetchMode = 'idle' | 'direct' | 'proxy' | 'failed';
+let lastFetchMode: FetchMode = 'idle';
+export function getLastFetchMode(): FetchMode {
+  return lastFetchMode;
+}
+
 export interface CacheMeta {
   tip: number | null;
   updatedAt: number;
@@ -111,18 +121,25 @@ async function rawFetch(url: string): Promise<unknown> {
  */
 async function fetchJson(url: string): Promise<unknown> {
   try {
-    return await rawFetch(url);
+    const r = await rawFetch(url);
+    lastFetchMode = 'direct';
+    return r;
   } catch (err1) {
     await sleep(600);
     try {
-      return await rawFetch(url);
+      const r = await rawFetch(url);
+      lastFetchMode = 'direct';
+      return r;
     } catch (err2) {
       // Direct requests failed — likely CORS on this origin or a network hiccup.
       // eslint-disable-next-line no-console
       console.warn(`[TemplateWatch] direct fetch failed for ${url}; trying CORS proxy`, err2);
       try {
-        return await rawFetch(proxied(url));
+        const r = await rawFetch(proxied(url));
+        lastFetchMode = 'proxy';
+        return r;
       } catch (err3) {
+        lastFetchMode = 'failed';
         // eslint-disable-next-line no-console
         console.error(`[TemplateWatch] all fetch attempts failed for ${url}`, err3);
         throw err3;

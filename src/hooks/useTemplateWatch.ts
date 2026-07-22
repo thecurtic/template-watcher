@@ -13,6 +13,7 @@ import {
   writeCachedBlock,
   readCacheMeta,
   writeCacheMeta,
+  getLastFetchMode,
   sleep,
   FETCH_DELAY_MS,
 } from '@/lib/templateWatch/api';
@@ -41,6 +42,7 @@ export interface TemplateWatchState {
   backfillProgress: number; // 0..1
   offline: boolean;
   loadError: string | null;
+  fetchMode: string;
   lastChecked: number | null;
   refresh: () => void;
 }
@@ -59,6 +61,7 @@ export function useTemplateWatch(): TemplateWatchState {
   const [backfillProgress, setBackfillProgress] = useState(0);
   const [offline, setOffline] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [fetchMode, setFetchMode] = useState<string>('idle');
   const [lastChecked, setLastChecked] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -112,11 +115,13 @@ export function useTemplateWatch(): TemplateWatchState {
         latest = await fetchLatestBlocks();
         setOffline(false);
         setLoadError(null);
+        setFetchMode(getLastFetchMode());
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[TemplateWatch] failed to fetch latest blocks', err);
         setOffline(cached.length > 0);
         setLoadError(err instanceof Error ? err.message : 'Failed to reach the data source');
+        setFetchMode(getLastFetchMode());
         setLoading(false);
         if (!cached.length) return;
       }
@@ -214,6 +219,7 @@ export function useTemplateWatch(): TemplateWatchState {
     backfillProgress,
     offline,
     loadError,
+    fetchMode,
     lastChecked,
     refresh,
   };
