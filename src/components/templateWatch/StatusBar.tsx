@@ -1,4 +1,4 @@
-import { WifiOff, Loader2, Info } from 'lucide-react';
+import { WifiOff, Loader2, Info, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export function BackfillBar({ progress }: { progress: number }) {
   return (
@@ -23,6 +23,31 @@ export function OfflineBanner({ height }: { height: number | null }) {
       <span>
         offline — showing cached data{height !== null ? ` through height ${height.toLocaleString()}` : ''}
       </span>
+    </div>
+  );
+}
+
+export function ErrorBanner({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-[var(--tw-warn)]/50 bg-[var(--tw-warn)]/5 px-4 py-3 text-xs text-[var(--tw-warn)] sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-center gap-2">
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+        Couldn't reach the data source: {message}
+      </span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="inline-flex items-center gap-1.5 self-start rounded-md border border-[var(--tw-warn)]/50 px-2.5 py-1 font-medium text-[var(--tw-warn)] transition-colors hover:bg-[var(--tw-warn)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tw-warn)] sm:self-auto"
+      >
+        <RefreshCw className="h-3.5 w-3.5" />
+        Retry
+      </button>
     </div>
   );
 }

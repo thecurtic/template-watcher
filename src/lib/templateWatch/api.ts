@@ -90,17 +90,44 @@ function pruneCache(count: number): void {
   }
 }
 
-async function fetchJson(url: string, retry = true): Promise<unknown> {
+/** Route a URL through Shakespeare's CORS proxy. */
+function proxied(url: string): string {
+  return `https://proxy.shakespeare.diy/?url=${encodeURIComponent(url)}`;
+}
+
+async function rawFetch(url: string): Promise<unknown> {
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+/**
+ * Fetch JSON with resilience:
+ *   1. direct request
+ *   2. on failure, retry once after a short delay
+ *   3. if that also fails (e.g. CORS on the deployed origin), fall back to the
+ *      CORS proxy so the site works from any domain, not just the preview.
+ * Errors are logged (not swallowed) so failures are visible in the console.
+ */
+async function fetchJson(url: string): Promise<unknown> {
   try {
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    if (retry) {
-      await sleep(600);
-      return fetchJson(url, false);
+    return await rawFetch(url);
+  } catch (err1) {
+    await sleep(600);
+    try {
+      return await rawFetch(url);
+    } catch (err2) {
+      // Direct requests failed — likely CORS on this origin or a network hiccup.
+      // eslint-disable-next-line no-console
+      console.warn(`[TemplateWatch] direct fetch failed for ${url}; trying CORS proxy`, err2);
+      try {
+        return await rawFetch(proxied(url));
+      } catch (err3) {
+        // eslint-disable-next-line no-console
+        console.error(`[TemplateWatch] all fetch attempts failed for ${url}`, err3);
+        throw err3;
+      }
     }
-    throw err;
   }
 }
 

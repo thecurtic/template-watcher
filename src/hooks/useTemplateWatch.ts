@@ -40,6 +40,7 @@ export interface TemplateWatchState {
   backfilling: boolean;
   backfillProgress: number; // 0..1
   offline: boolean;
+  loadError: string | null;
   lastChecked: number | null;
   refresh: () => void;
 }
@@ -57,6 +58,7 @@ export function useTemplateWatch(): TemplateWatchState {
   const [backfilling, setBackfilling] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState(0);
   const [offline, setOffline] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -109,8 +111,12 @@ export function useTemplateWatch(): TemplateWatchState {
       try {
         latest = await fetchLatestBlocks();
         setOffline(false);
-      } catch {
+        setLoadError(null);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[TemplateWatch] failed to fetch latest blocks', err);
         setOffline(cached.length > 0);
+        setLoadError(err instanceof Error ? err.message : 'Failed to reach the data source');
         setLoading(false);
         if (!cached.length) return;
       }
@@ -207,6 +213,7 @@ export function useTemplateWatch(): TemplateWatchState {
     backfilling,
     backfillProgress,
     offline,
+    loadError,
     lastChecked,
     refresh,
   };

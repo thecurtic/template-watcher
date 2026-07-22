@@ -9,6 +9,7 @@ import {
   BackfillBar,
   OfflineBanner,
   SignalingOnlyBanner,
+  ErrorBanner,
 } from '@/components/templateWatch/StatusBar';
 
 export default function TemplateWatch() {
@@ -31,7 +32,9 @@ export default function TemplateWatch() {
     backfilling,
     backfillProgress,
     offline,
+    loadError,
     lastChecked,
+    refresh,
   } = useTemplateWatch();
 
   const signalingOnly = discovery.signalingOnly;
@@ -64,6 +67,9 @@ export default function TemplateWatch() {
 
         {/* Status banners */}
         <div className="mb-8 space-y-2">
+          {loadError && totalBlocks === 0 && (
+            <ErrorBanner message={loadError} onRetry={refresh} />
+          )}
           {offline && <OfflineBanner height={maxHeight} />}
           {signalingOnly && <SignalingOnlyBanner />}
           {backfilling && <BackfillBar progress={backfillProgress} />}
