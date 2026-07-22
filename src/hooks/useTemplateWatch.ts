@@ -22,7 +22,10 @@ import {
   computeWatchEvents,
   discoverViolationField,
 } from '@/lib/templateWatch/analysis';
-import { BACKFILL_TARGET_HEIGHT } from '@/lib/templateWatch/constants';
+import {
+  BACKFILL_TARGET_HEIGHT,
+  BACKFILL_ENABLED,
+} from '@/lib/templateWatch/constants';
 
 export interface TemplateWatchState {
   blocks: AnalyzedBlock[];
@@ -122,7 +125,14 @@ export function useTemplateWatch(): TemplateWatchState {
       setLoading(false);
 
       // 2. Backfill missing history down to target height.
+      //    Disabled in dev by default (see BACKFILL_ENABLED). When off, we keep
+      //    whatever is already cached and mark progress complete.
       if (cancelledRef.current) return;
+      if (!BACKFILL_ENABLED) {
+        setBackfillProgress(1);
+        setBackfilling(false);
+        return;
+      }
       setBackfilling(true);
 
       const have = new Set<number>(readAllCachedBlocks().map((b) => b.height));

@@ -18,6 +18,22 @@ export const CACHE_META_KEY = 'tw:meta';
 /** Polite delay between sequential requests (ms). */
 export const FETCH_DELAY_MS = 250;
 
+/**
+ * Whether to run the historical backfill loop.
+ *
+ * Backfill is expensive (~900 sequential requests to reach the target height),
+ * so by default it is DISABLED in dev (`npm run dev`) and ENABLED in the
+ * production build. You can override this with the `VITE_TW_BACKFILL` env var:
+ *   VITE_TW_BACKFILL=on   → force backfill on  (even in dev)
+ *   VITE_TW_BACKFILL=off  → force backfill off (even in prod)
+ */
+export const BACKFILL_ENABLED: boolean = (() => {
+  const override = import.meta.env.VITE_TW_BACKFILL as string | undefined;
+  if (override === 'on') return true;
+  if (override === 'off') return false;
+  return import.meta.env.PROD; // default: prod = on, dev = off
+})();
+
 /** Pools excluded from watch alerts (they filter by policy already). */
 export const EXCLUDED_POOLS = ['OCEAN'];
 
