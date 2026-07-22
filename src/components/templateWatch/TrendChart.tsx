@@ -128,7 +128,7 @@ export function TrendChart({
                 }}
                 labelStyle={{ color: 'hsl(215 15% 55%)' }}
                 labelFormatter={(ts) => new Date(ts as number).toLocaleDateString()}
-                formatter={(value: number, name: string) => [
+                formatter={(value, name) => [
                   `${Number(value).toFixed(1)}%`,
                   name,
                 ]}

@@ -124,7 +124,7 @@ async function fetchJson(url: string): Promise<unknown> {
     const r = await rawFetch(url);
     lastFetchMode = 'direct';
     return r;
-  } catch (err1) {
+  } catch {
     await sleep(600);
     try {
       const r = await rawFetch(url);
@@ -132,7 +132,6 @@ async function fetchJson(url: string): Promise<unknown> {
       return r;
     } catch (err2) {
       // Direct requests failed — likely CORS on this origin or a network hiccup.
-      // eslint-disable-next-line no-console
       console.warn(`[TemplateWatch] direct fetch failed for ${url}; trying CORS proxy`, err2);
       try {
         const r = await rawFetch(proxied(url));
@@ -140,7 +139,6 @@ async function fetchJson(url: string): Promise<unknown> {
         return r;
       } catch (err3) {
         lastFetchMode = 'failed';
-        // eslint-disable-next-line no-console
         console.error(`[TemplateWatch] all fetch attempts failed for ${url}`, err3);
         throw err3;
       }

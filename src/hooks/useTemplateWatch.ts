@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   RawBlock,
   AnalyzedBlock,
@@ -54,8 +54,21 @@ const DEFAULT_DISCOVERY: DiscoveryResult = {
 };
 
 export function useTemplateWatch(): TemplateWatchState {
-  const [rawByHeight, setRawByHeight] = useState<Map<number, RawBlock>>(new Map());
-  const [discovery, setDiscovery] = useState<DiscoveryResult>(DEFAULT_DISCOVERY);
+  // Seed state from the localStorage cache in lazy initializers (rather than an
+  // effect) so the first render already shows cached data without a re-render.
+  const [rawByHeight, setRawByHeight] = useState<Map<number, RawBlock>>(() => {
+    const map = new Map<number, RawBlock>();
+    for (const b of readAllCachedBlocks()) map.set(b.height, b);
+    return map;
+  });
+  const [discovery, setDiscovery] = useState<DiscoveryResult>(() => {
+    const cached = [...rawByHeight.values()];
+    if (!cached.length) return DEFAULT_DISCOVERY;
+    const found = discoverViolationField(cached[cached.length - 1]);
+    return found
+      ? { violationField: found.field, source: 'list', signalingOnly: false }
+      : DEFAULT_DISCOVERY;
+  });
   const [loading, setLoading] = useState(true);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState(0);
@@ -65,7 +78,7 @@ export function useTemplateWatch(): TemplateWatchState {
   const [lastChecked, setLastChecked] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const discoveryRef = useRef<DiscoveryResult>(DEFAULT_DISCOVERY);
+  const discoveryRef = useRef<DiscoveryResult>(discovery);
   const cancelledRef = useRef(false);
 
   const ingest = useCallback((blocks: RawBlock[]) => {
@@ -84,11 +97,9 @@ export function useTemplateWatch(): TemplateWatchState {
     let result: DiscoveryResult;
     if (found) {
       result = { violationField: found.field, source: 'list', signalingOnly: false };
-      // eslint-disable-next-line no-console
       console.info(`[TemplateWatch] violation field discovered: "${found.field}"`);
     } else {
       result = { violationField: null, source: 'none', signalingOnly: true };
-      // eslint-disable-next-line no-console
       console.warn('[TemplateWatch] no violation field found — signaling-only mode');
     }
     discoveryRef.current = result;
@@ -99,14 +110,8 @@ export function useTemplateWatch(): TemplateWatchState {
   useEffect(() => {
     cancelledRef.current = false;
 
-    // 1. Load cache immediately.
-    const cached = readAllCachedBlocks();
-    if (cached.length) {
-      const map = new Map<number, RawBlock>();
-      for (const b of cached) map.set(b.height, b);
-      setRawByHeight(map);
-      runDiscovery(cached[cached.length - 1]);
-    }
+    // Blocks already in memory (seeded from cache on mount, grown since).
+    const hadBlocks = rawByHeight.size > 0;
 
     const run = async () => {
       setLoading(true);
@@ -117,13 +122,12 @@ export function useTemplateWatch(): TemplateWatchState {
         setLoadError(null);
         setFetchMode(getLastFetchMode());
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error('[TemplateWatch] failed to fetch latest blocks', err);
-        setOffline(cached.length > 0);
+        setOffline(hadBlocks);
         setLoadError(err instanceof Error ? err.message : 'Failed to reach the data source');
         setFetchMode(getLastFetchMode());
         setLoading(false);
-        if (!cached.length) return;
+        if (!hadBlocks) return;
       }
 
       if (latest.length) {
@@ -146,7 +150,8 @@ export function useTemplateWatch(): TemplateWatchState {
       }
       setBackfilling(true);
 
-      const have = new Set<number>(readAllCachedBlocks().map((b) => b.height));
+      const have = new Set<number>(rawByHeight.keys());
+      for (const b of latest) have.add(b.height);
       const tip = latest.length
         ? Math.max(...latest.map((b) => b.height))
         : readCacheMeta().tip ?? Math.max(...[...have], BACKFILL_TARGET_HEIGHT);
@@ -195,15 +200,22 @@ export function useTemplateWatch(): TemplateWatchState {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  // Derive analyzed data.
-  const raws = [...rawByHeight.values()];
-  const analyzed: AnalyzedBlock[] = raws.map((b) => analyzeBlock(b, discovery));
-  const pools = computePoolStats(analyzed, discovery.signalingOnly);
-  const events = computeWatchEvents(analyzed, discovery.signalingOnly);
+  // Derive analyzed data. Memoized — the full analysis pass over every block
+  // would otherwise rerun on each of the ~950 renders backfill triggers.
+  const { analyzed, pools, events, minHeight, maxHeight } = useMemo(() => {
+    const raws = [...rawByHeight.values()];
+    const analyzed: AnalyzedBlock[] = raws.map((b) => analyzeBlock(b, discovery));
+    const pools = computePoolStats(analyzed, discovery.signalingOnly);
+    const events = computeWatchEvents(analyzed, discovery.signalingOnly);
 
-  const heights = analyzed.map((b) => b.height);
-  const minHeight = heights.length ? Math.min(...heights) : null;
-  const maxHeight = heights.length ? Math.max(...heights) : null;
+    let minHeight: number | null = null;
+    let maxHeight: number | null = null;
+    for (const b of analyzed) {
+      if (minHeight === null || b.height < minHeight) minHeight = b.height;
+      if (maxHeight === null || b.height > maxHeight) maxHeight = b.height;
+    }
+    return { analyzed, pools, events, minHeight, maxHeight };
+  }, [rawByHeight, discovery]);
 
   return {
     blocks: analyzed,
