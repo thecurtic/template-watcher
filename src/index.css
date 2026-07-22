@@ -188,3 +188,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Template Watch monitoring-console theme ──────────────────────────── */
+/* Near-black background, single amber accent, tabular figures. */
+.tw-console {
+  --tw-bg: hsl(220 20% 6%);
+  --tw-bg-elev: hsl(220 18% 9%);
+  --tw-bg-elev2: hsl(220 16% 12%);
+  --tw-border: hsl(220 14% 18%);
+  --tw-fg: hsl(210 30% 92%);
+  --tw-muted: hsl(215 15% 55%);
+  --tw-accent: hsl(38 96% 56%);
+  --tw-accent-dim: hsl(38 70% 44%);
+  --tw-warn: hsl(30 95% 58%);
+  --tw-ok: hsl(150 55% 48%);
+  background-color: var(--tw-bg);
+  color: var(--tw-fg);
+}
+
+.tw-tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@keyframes tw-pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(150 55% 48% / 0.4); }
+  70% { box-shadow: 0 0 0 12px hsl(150 55% 48% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(150 55% 48% / 0); }
+}
+.motion-safe\:tw-pulse {
+  animation: tw-pulse-ring 2.4s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:tw-pulse { animation: none; }
+}
