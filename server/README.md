@@ -1,8 +1,8 @@
 # Template Watch server
 
 A zero-dependency Node service that replaces the public `mempool.kilombino.com` API for
-the Template Watch dashboard. It reads blocks straight from your own Bitcoin Knots (or
-Core) node over JSON-RPC, computes BIP-110 signaling + violation data per block, stores
+the Template Watch dashboard. It reads blocks straight from your own Bitcoin node
+(Core or Knots) over JSON-RPC, computes BIP-110 signaling + violation data per block, stores
 a slim index in SQLite, and serves the mempool-compatible endpoints the frontend
 already speaks.
 

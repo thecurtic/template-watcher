@@ -7,6 +7,7 @@ import { BUILD_STAMP } from '@/lib/templateWatch/constants';
 import { WatchFeed } from '@/components/templateWatch/WatchFeed';
 import { PoolMatrix } from '@/components/templateWatch/PoolMatrix';
 import { TrendChart } from '@/components/templateWatch/TrendChart';
+import { ComplianceRules } from '@/components/templateWatch/ComplianceRules';
 import {
   BackfillBar,
   OfflineBanner,
@@ -121,13 +122,14 @@ export default function TemplateWatch() {
             total={totalBlocks}
             signalingOnly={signalingOnly}
           />
+
+          <ComplianceRules />
         </div>
 
         {/* Footer */}
         <footer className="mt-16 border-t border-[var(--tw-border)] pt-6 text-xs leading-relaxed text-[var(--tw-muted)]">
           <p>
-            Data: self-hosted index from our own Bitcoin Knots node · BIP-110
-            detection method from{' '}
+            Data: self-hosted block index · BIP-110 detection method from{' '}
             <a
               href="https://github.com/Kilombino/mempool-bip110"
               target="_blank"

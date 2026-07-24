@@ -35,7 +35,7 @@ aesthetic:
 ## Data source
 
 Data is served by our own lightweight backend in [`server/`](server/), which indexes
-blocks directly from a self-hosted Bitcoin Knots node and exposes a mempool-compatible
+blocks directly from a self-hosted Bitcoin full node and exposes a mempool-compatible
 API on the same origin (`/api/*`):
 
 - `GET /api/v1/blocks` — latest blocks, newest first
@@ -115,7 +115,7 @@ npm test       # typecheck + lint + tests + build
 
 The site runs at `template-watcher.curtisheinen.com`: the static frontend plus the
 `server/` backend behind Caddy on the same subdomain, with the backend reading blocks
-over Tailscale from a Bitcoin Knots node. See [`server/README.md`](server/README.md)
+over Tailscale from a Bitcoin full node. See [`server/README.md`](server/README.md)
 for the full deployment guide (node RPC config, Caddy, systemd, validation).
 
 ## Project layout
@@ -125,7 +125,7 @@ server/                     # self-hosted backend (see server/README.md)
 ├── src/
 │   ├── bip110.ts           # 7-rule violation checker (ported from Kilombino)
 │   ├── pools.ts            # pool attribution (mempool mining-pools dataset)
-│   ├── indexer.ts          # tip-follow + backfill from Knots RPC
+│   ├── indexer.ts          # tip-follow + backfill from node RPC
 │   ├── server.ts           # mempool-compatible HTTP API
 │   └── validate.ts         # parity check against mempool.kilombino.com
 src/
