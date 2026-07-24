@@ -83,6 +83,8 @@ gracefully into **signaling-only mode** and hides the compliance columns.
   backoff before being skipped.
 - Backfill runs incrementally from the current tip back to height 938,781 (March 1, 2026),
   rendering as data arrives with a progress indicator — the UI is never blocked.
+- The dashboard auto-refreshes every 60 seconds while the tab is visible (and
+  immediately when you return to it), so new blocks appear without a reload.
 - If the API is unreachable, the app renders entirely from cache with an
   "offline — showing cached data" banner.
 

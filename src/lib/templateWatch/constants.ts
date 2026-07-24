@@ -35,6 +35,13 @@ export const CACHE_META_KEY = 'tw:meta';
 export const FETCH_DELAY_MS = 250;
 
 /**
+ * How often the dashboard re-checks for new blocks while the tab is visible.
+ * Blocks arrive every ~10 minutes and the backend polls its node every ~30s,
+ * so one minute keeps the page effectively live without request spam.
+ */
+export const AUTO_REFRESH_MS = 60_000;
+
+/**
  * Whether to run the historical backfill loop.
  *
  * Backfill is expensive (~900 sequential requests to reach the target height),

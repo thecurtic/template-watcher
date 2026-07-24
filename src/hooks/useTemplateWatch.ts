@@ -26,6 +26,7 @@ import {
 import {
   BACKFILL_TARGET_HEIGHT,
   BACKFILL_ENABLED,
+  AUTO_REFRESH_MS,
 } from '@/lib/templateWatch/constants';
 
 export interface TemplateWatchState {
@@ -199,6 +200,31 @@ export function useTemplateWatch(): TemplateWatchState {
   }, [refreshKey]);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // Auto-refresh: poll for new blocks while the tab is visible, and catch up
+  // immediately when the user returns to the tab. Skipped mid-backfill so the
+  // historical fetch loop is never cancelled and restarted by a poll.
+  const backfillingRef = useRef(false);
+  useEffect(() => {
+    backfillingRef.current = backfilling;
+  }, [backfilling]);
+  const lastRunRef = useRef(0);
+  useEffect(() => {
+    lastRunRef.current = Date.now();
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (backfillingRef.current) return;
+      if (Date.now() - lastRunRef.current < AUTO_REFRESH_MS / 2) return;
+      lastRunRef.current = Date.now();
+      setRefreshKey((k) => k + 1);
+    };
+    const id = setInterval(tick, AUTO_REFRESH_MS);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, []);
 
   // Derive analyzed data. Memoized — the full analysis pass over every block
   // would otherwise rerun on each of the ~950 renders backfill triggers.
