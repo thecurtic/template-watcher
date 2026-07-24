@@ -28,13 +28,18 @@ const PALETTE = [
 
 type Metric = 'clean' | 'sig';
 
-type Horizon = '7d' | '30d' | '90d' | 'all';
+type Horizon = '1008' | '2016' | '4032' | 'all';
 
-const HORIZONS: Array<{ key: Horizon; label: string; days: number | null }> = [
-  { key: '7d', label: '7D', days: 7 },
-  { key: '30d', label: '30D', days: 30 },
-  { key: '90d', label: '90D', days: 90 },
-  { key: 'all', label: 'All', days: null },
+/**
+ * Horizons are block counts, not calendar windows — blocks are the native unit
+ * of the BIP-110 deadline (height 961,632). Thresholds align with Bitcoin's
+ * 2,016-block difficulty periods (~144 blocks/day).
+ */
+const HORIZONS: Array<{ key: Horizon; label: string; blocks: number | null; title: string }> = [
+  { key: '1008', label: '1,008', blocks: 1_008, title: '≈1 week · ½ difficulty period' },
+  { key: '2016', label: '2,016', blocks: 2_016, title: '≈2 weeks · 1 difficulty period' },
+  { key: '4032', label: '4,032', blocks: 4_032, title: '≈1 month · 2 difficulty periods' },
+  { key: 'all', label: 'All', blocks: null, title: 'Everything since March 1, 2026' },
 ];
 
 const DAY_MS = 86_400_000;
@@ -51,9 +56,9 @@ export function TrendChart({
   signalingOnly: boolean;
 }) {
   const [metric, setMetric] = useState<Metric>(signalingOnly ? 'sig' : 'clean');
-  // Default to the last 30 days: the run-up to mandatory signaling is the
-  // period that matters, and the x-axis extends to the activation date below.
-  const [horizon, setHorizon] = useState<Horizon>('30d');
+  // Default to two difficulty periods: the run-up to mandatory signaling is
+  // the period that matters, and the x-axis extends to the activation date below.
+  const [horizon, setHorizon] = useState<Horizon>('4032');
 
   const visiblePools = useMemo(
     () => withOther(pools, total, 0.01).map((p) => p.pool),
@@ -62,17 +67,33 @@ export function TrendChart({
 
   const data = useMemo(() => {
     const all = computeTrend(blocks, visiblePools, signalingOnly);
-    const days = HORIZONS.find((h) => h.key === horizon)?.days ?? null;
-    if (days === null || all.length === 0) return all;
-    // Window is anchored to the newest data point (not the wall clock), so a
-    // stale cache still shows a full window.
-    const cutoff = all[all.length - 1].ts - (days - 1) * DAY_MS;
-    return all.filter((p) => p.ts >= cutoff);
+    const n = HORIZONS.find((h) => h.key === horizon)?.blocks ?? null;
+    if (n === null || all.length === 0 || blocks.length === 0) return all;
+
+    // "Last N blocks" → time cutoff: the trend points are daily buckets with
+    // no height, but the raw blocks carry both. Anchored to the newest block's
+    // height (not the wall clock), so a stale cache still shows a full window.
+    let maxHeight = -Infinity;
+    for (const b of blocks) {
+      if (b.height > maxHeight) maxHeight = b.height;
+    }
+    const cutoffHeight = maxHeight - n + 1;
+    let minTs = Infinity;
+    for (const b of blocks) {
+      if (b.height >= cutoffHeight && b.timestamp < minTs) minTs = b.timestamp;
+    }
+    if (!Number.isFinite(minTs)) return all;
+
+    // Snap to the start of that block's UTC day, matching computeTrend's
+    // dayKey bucketing (point.ts values are UTC midnights).
+    const dayStart = new Date(minTs * 1000).setUTCHours(0, 0, 0, 0);
+    return all.filter((p) => p.ts >= dayStart);
   }, [blocks, visiblePools, signalingOnly, horizon]);
 
   const markerTs = MANDATORY_SIGNALING_DATE.getTime();
 
   const activeMetric: Metric = signalingOnly ? 'sig' : metric;
+  const activeHorizon = HORIZONS.find((h) => h.key === horizon) ?? HORIZONS[HORIZONS.length - 1];
 
   return (
     <section aria-labelledby="trend-heading" className="space-y-5">
@@ -91,6 +112,7 @@ export function TrendChart({
                 type="button"
                 onClick={() => setHorizon(h.key)}
                 aria-pressed={horizon === h.key}
+                title={h.title}
                 className={[
                   'rounded-md px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tw-accent)]',
                   horizon === h.key
@@ -209,8 +231,9 @@ export function TrendChart({
         )}
         <p className="mt-3 text-xs text-[var(--tw-muted)]">
           {activeMetric === 'clean' ? 'BIP-110-compliant template' : 'Signaling'} share per day for
-          pools ≥1% of analyzed blocks (others aggregated). Dashed marker estimates the
-          mandatory signaling height by date.
+          pools ≥1% of analyzed blocks (others aggregated)
+          {activeHorizon.blocks !== null && <> over the last {activeHorizon.label} blocks</>}.
+          Dashed marker estimates the mandatory signaling height by date.
         </p>
       </div>
     </section>
