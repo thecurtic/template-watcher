@@ -33,17 +33,36 @@ aesthetic:
 
 ## Data source
 
-All data is fetched directly in the browser from
-[`mempool.kilombino.com`](https://mempool.kilombino.com) — a mempool-explorer fork that
-computes per-block BIP-110 rule-violation data. No backend of our own is required.
+Data is served by our own lightweight backend in [`server/`](server/), which indexes
+blocks directly from a self-hosted Bitcoin Knots node and exposes a mempool-compatible
+API on the same origin (`/api/*`):
 
 - `GET /api/v1/blocks` — latest blocks, newest first
-- `GET /api/v1/blocks/{height}` — a page of blocks at and below `{height}` (used for backfill)
-- `GET /api/v1/block/{hash}` — single-block detail (fallback)
+- `GET /api/v1/blocks/{height}` — a page of blocks at and below `{height}` (used for
+  backfill; supports `?limit=` up to 500)
+- `GET /healthz` — indexer status (tip, floor, backfill progress)
+
+The index reaches back to height **938,781** (March 1, 2026 — the first
+BIP-110-signaling block, from OCEAN / Barefoot Mining, was mined later that day at
+height 938,903).
+
+### Credit
+
+The BIP-110 violation-detection method — the seven-rule per-transaction checker and
+the per-block violation counts — is ported from
+[**Kilombino's mempool fork**](https://github.com/Kilombino/mempool-bip110)
+(`backend/src/api/common.ts`), itself derived from
+[paulscode/mempool-bip110](https://github.com/paulscode/mempool-bip110). Both are
+AGPL-3.0; the ported code in `server/src/bip110.ts` remains AGPL-3.0. Before we
+self-hosted, this dashboard ran against Kilombino's public instance at
+[`mempool.kilombino.com`](https://mempool.kilombino.com), which remains the reference
+we validate against (`server/src/validate.ts`). Pool attribution uses the open
+[mempool/mining-pools](https://github.com/mempool/mining-pools) dataset (vendored as
+`server/pools.json`).
 
 The app auto-discovers the violation field on the first fetched block (case-insensitively
-scanning for `bip110`, `violation`, `violating`, `reduced`). At the time of writing it
-resolves to `extras.bip110ViolationCount`. If no violation field is exposed, the app degrades
+scanning for `bip110`, `violation`, `violating`, `reduced`). It resolves to
+`extras.bip110ViolationCount`. If no violation field is exposed, the app degrades
 gracefully into **signaling-only mode** and hides the clean/dirty columns.
 
 ### Definitions
@@ -61,7 +80,7 @@ gracefully into **signaling-only mode** and hides the clean/dirty columns.
   used and only missing heights are fetched.
 - Requests are sequential with a ~250ms delay (no parallel storms) and retried once with
   backoff before being skipped.
-- Backfill runs incrementally from the current tip back to height 945,000 (~2.5 months),
+- Backfill runs incrementally from the current tip back to height 938,781 (March 1, 2026),
   rendering as data arrives with a progress indicator — the UI is never blocked.
 - If the API is unreachable, the app renders entirely from cache with an
   "offline — showing cached data" banner.
@@ -91,9 +110,23 @@ npm run build  # production build into dist/
 npm test       # typecheck + lint + tests + build
 ```
 
+## Self-hosting
+
+The site runs at `template-watcher.curtisheinen.com`: the static frontend plus the
+`server/` backend behind Caddy on the same subdomain, with the backend reading blocks
+over Tailscale from a Bitcoin Knots node. See [`server/README.md`](server/README.md)
+for the full deployment guide (node RPC config, Caddy, systemd, validation).
+
 ## Project layout
 
 ```
+server/                     # self-hosted backend (see server/README.md)
+├── src/
+│   ├── bip110.ts           # 7-rule violation checker (ported from Kilombino)
+│   ├── pools.ts            # pool attribution (mempool mining-pools dataset)
+│   ├── indexer.ts          # tip-follow + backfill from Knots RPC
+│   ├── server.ts           # mempool-compatible HTTP API
+│   └── validate.ts         # parity check against mempool.kilombino.com
 src/
 ├── lib/templateWatch/
 │   ├── types.ts        # shared type definitions

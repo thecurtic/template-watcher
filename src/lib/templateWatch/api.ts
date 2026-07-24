@@ -12,7 +12,7 @@ export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Which network path last succeeded — surfaced in the on-screen diagnostics so
  * issues can be debugged on devices without DevTools (e.g. iPad Safari).
  */
-export type FetchMode = 'idle' | 'direct' | 'proxy' | 'failed';
+export type FetchMode = 'idle' | 'direct' | 'failed';
 let lastFetchMode: FetchMode = 'idle';
 export function getLastFetchMode(): FetchMode {
   return lastFetchMode;
@@ -100,11 +100,6 @@ function pruneCache(count: number): void {
   }
 }
 
-/** Route a URL through Shakespeare's CORS proxy. */
-function proxied(url: string): string {
-  return `https://proxy.shakespeare.diy/?url=${encodeURIComponent(url)}`;
-}
-
 async function rawFetch(url: string): Promise<unknown> {
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -112,11 +107,8 @@ async function rawFetch(url: string): Promise<unknown> {
 }
 
 /**
- * Fetch JSON with resilience:
- *   1. direct request
- *   2. on failure, retry once after a short delay
- *   3. if that also fails (e.g. CORS on the deployed origin), fall back to the
- *      CORS proxy so the site works from any domain, not just the preview.
+ * Fetch JSON with one retry. The API is same-origin (served by our own
+ * backend behind Caddy), so there is no CORS fallback anymore.
  * Errors are logged (not swallowed) so failures are visible in the console.
  */
 async function fetchJson(url: string): Promise<unknown> {
@@ -131,17 +123,9 @@ async function fetchJson(url: string): Promise<unknown> {
       lastFetchMode = 'direct';
       return r;
     } catch (err2) {
-      // Direct requests failed — likely CORS on this origin or a network hiccup.
-      console.warn(`[TemplateWatch] direct fetch failed for ${url}; trying CORS proxy`, err2);
-      try {
-        const r = await rawFetch(proxied(url));
-        lastFetchMode = 'proxy';
-        return r;
-      } catch (err3) {
-        lastFetchMode = 'failed';
-        console.error(`[TemplateWatch] all fetch attempts failed for ${url}`, err3);
-        throw err3;
-      }
+      lastFetchMode = 'failed';
+      console.error(`[TemplateWatch] fetch failed for ${url}`, err2);
+      throw err2;
     }
   }
 }
@@ -162,9 +146,13 @@ export async function fetchLatestBlocks(): Promise<RawBlock[]> {
   return data.filter(isRawBlock);
 }
 
-/** GET /api/v1/blocks/{height} — ~15 blocks at and below {height}, newest first. */
+/**
+ * GET /api/v1/blocks/{height} — blocks at and below {height}, newest first.
+ * Our backend honors ?limit= (up to 500) so backfill takes far fewer round
+ * trips; a stock mempool instance ignores the param and returns ~15.
+ */
 export async function fetchBlocksFrom(height: number): Promise<RawBlock[]> {
-  const data = await fetchJson(`${MEMPOOL_BASE_URL}/api/v1/blocks/${height}`);
+  const data = await fetchJson(`${MEMPOOL_BASE_URL}/api/v1/blocks/${height}?limit=100`);
   if (!Array.isArray(data)) return [];
   return data.filter(isRawBlock);
 }

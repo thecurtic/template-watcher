@@ -41,6 +41,9 @@ Thumbs.db
 # Vercel
 .vercel
 
+# Template Watch server runtime data (SQLite index)
+server/data/
+
 # Secrets
 .env
 .env.*

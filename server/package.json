@@ -1,0 +1,20 @@
+{
+  "name": "template-watch-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Self-hosted Template Watch backend: indexes BIP-110 signaling and violations from a Bitcoin Core/Knots node and serves a mempool-compatible API.",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "validate": "node src/validate.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "typescript": "^6.0.3"
+  }
+}

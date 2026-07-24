@@ -126,17 +126,18 @@ export default function TemplateWatch() {
         {/* Footer */}
         <footer className="mt-16 border-t border-[var(--tw-border)] pt-6 text-xs leading-relaxed text-[var(--tw-muted)]">
           <p>
-            Data:{' '}
+            Data: self-hosted index from our own Bitcoin Knots node · BIP-110
+            detection method from{' '}
             <a
-              href="https://mempool.kilombino.com"
+              href="https://github.com/Kilombino/mempool-bip110"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[var(--tw-accent)] hover:underline"
             >
-              mempool.kilombino.com
+              Kilombino&apos;s mempool fork
             </a>{' '}
-            (community BIP-110 explorer) · independent project, affiliated with no side ·
-            built at bitcoin++ Toronto 2026
+            · independent project, affiliated with no side · built at bitcoin++
+            Toronto 2026
           </p>
           {minHeight !== null && maxHeight !== null && (
             <p className="tw-tnum mt-1">
