@@ -28,6 +28,17 @@ const PALETTE = [
 
 type Metric = 'clean' | 'sig';
 
+type Horizon = '7d' | '30d' | '90d' | 'all';
+
+const HORIZONS: Array<{ key: Horizon; label: string; days: number | null }> = [
+  { key: '7d', label: '7D', days: 7 },
+  { key: '30d', label: '30D', days: 30 },
+  { key: '90d', label: '90D', days: 90 },
+  { key: 'all', label: 'All', days: null },
+];
+
+const DAY_MS = 86_400_000;
+
 export function TrendChart({
   blocks,
   pools,
@@ -40,16 +51,24 @@ export function TrendChart({
   signalingOnly: boolean;
 }) {
   const [metric, setMetric] = useState<Metric>(signalingOnly ? 'sig' : 'clean');
+  // Default to the last 30 days: the run-up to mandatory signaling is the
+  // period that matters, and the x-axis extends to the activation date below.
+  const [horizon, setHorizon] = useState<Horizon>('30d');
 
   const visiblePools = useMemo(
     () => withOther(pools, total, 0.01).map((p) => p.pool),
     [pools, total],
   );
 
-  const data = useMemo(
-    () => computeTrend(blocks, visiblePools, signalingOnly),
-    [blocks, visiblePools, signalingOnly],
-  );
+  const data = useMemo(() => {
+    const all = computeTrend(blocks, visiblePools, signalingOnly);
+    const days = HORIZONS.find((h) => h.key === horizon)?.days ?? null;
+    if (days === null || all.length === 0) return all;
+    // Window is anchored to the newest data point (not the wall clock), so a
+    // stale cache still shows a full window.
+    const cutoff = all[all.length - 1].ts - (days - 1) * DAY_MS;
+    return all.filter((p) => p.ts >= cutoff);
+  }, [blocks, visiblePools, signalingOnly, horizon]);
 
   const markerTs = MANDATORY_SIGNALING_DATE.getTime();
 
@@ -64,25 +83,45 @@ export function TrendChart({
         >
           Trend
         </h2>
-        {!signalingOnly && (
+        <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-[var(--tw-border)] bg-[var(--tw-bg-elev)] p-0.5 text-xs">
-            {(['clean', 'sig'] as Metric[]).map((m) => (
+            {HORIZONS.map((h) => (
               <button
-                key={m}
+                key={h.key}
                 type="button"
-                onClick={() => setMetric(m)}
+                onClick={() => setHorizon(h.key)}
+                aria-pressed={horizon === h.key}
                 className={[
                   'rounded-md px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tw-accent)]',
-                  activeMetric === m
+                  horizon === h.key
                     ? 'bg-[var(--tw-accent)] text-black'
                     : 'text-[var(--tw-muted)] hover:text-[var(--tw-fg)]',
                 ].join(' ')}
               >
-                {m === 'clean' ? 'BIP-110 compliant share' : 'Signaling share'}
+                {h.label}
               </button>
             ))}
           </div>
-        )}
+          {!signalingOnly && (
+            <div className="inline-flex rounded-lg border border-[var(--tw-border)] bg-[var(--tw-bg-elev)] p-0.5 text-xs">
+              {(['clean', 'sig'] as Metric[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMetric(m)}
+                  className={[
+                    'rounded-md px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tw-accent)]',
+                    activeMetric === m
+                      ? 'bg-[var(--tw-accent)] text-black'
+                      : 'text-[var(--tw-muted)] hover:text-[var(--tw-fg)]',
+                  ].join(' ')}
+                >
+                  {m === 'clean' ? 'BIP-110 compliant share' : 'Signaling share'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="rounded-xl border border-[var(--tw-border)] bg-[var(--tw-bg-elev)] p-4">
@@ -98,7 +137,10 @@ export function TrendChart({
                 dataKey="ts"
                 type="number"
                 scale="time"
-                domain={['dataMin', 'dataMax']}
+                // Extend the right edge to the mandatory-signaling date so the
+                // remaining runway to activation is always in frame; once the
+                // date has passed, this naturally falls back to the data max.
+                domain={['dataMin', (dataMax: number) => Math.max(dataMax, markerTs + DAY_MS / 2)]}
                 tickFormatter={(ts) =>
                   new Date(ts).toLocaleDateString(undefined, {
                     month: 'short',
