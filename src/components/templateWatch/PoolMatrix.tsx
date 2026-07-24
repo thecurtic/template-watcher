@@ -33,11 +33,11 @@ export function PoolMatrix({
               <th scope="col" className="px-4 py-3 text-right font-semibold">Blocks</th>
               <th scope="col" className="px-4 py-3 text-right font-semibold">Signaling %</th>
               {!signalingOnly && (
-                <th scope="col" className="px-4 py-3 text-right font-semibold">Clean %</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold">BIP-110 compliant %</th>
               )}
               {!signalingOnly && (
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Clean, not signaling
+                  Compliant, not signaling
                 </th>
               )}
             </tr>
@@ -108,7 +108,7 @@ export function PoolMatrix({
       </div>
       {!signalingOnly && (
         <p className="text-xs text-[var(--tw-muted)]">
-          <span className="text-[var(--tw-warn)]">Clean, not signaling</span> is the
+          <span className="text-[var(--tw-warn)]">Compliant, not signaling</span> is the
           tell — a pool producing BIP-110-compliant templates without signaling for the fork.
           Pools under 1% of analyzed blocks are collapsed into "Other".
         </p>

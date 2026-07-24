@@ -211,6 +211,17 @@
   font-feature-settings: "tnum" 1;
 }
 
+@keyframes tw-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tw-fade-in {
+  animation: tw-fade-in 0.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-fade-in { animation: none; }
+}
+
 @keyframes tw-pulse-ring {
   0% { box-shadow: 0 0 0 0 hsl(150 55% 48% / 0.4); }
   70% { box-shadow: 0 0 0 12px hsl(150 55% 48% / 0); }

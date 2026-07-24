@@ -53,5 +53,15 @@ export const BACKFILL_ENABLED: boolean = (() => {
 /** Pools excluded from watch alerts (they filter by policy already). */
 export const EXCLUDED_POOLS = ['OCEAN'];
 
+/**
+ * How long a watch-feed event stays on screen, measured from its block
+ * timestamp. Events older than this are hidden; they visibly fade during the
+ * last quarter of the window.
+ */
+export const WATCH_EVENT_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Maximum events shown in the watch feed at once (newest first). */
+export const WATCH_FEED_MAX_EVENTS = 3;
+
 /** Average seconds per block, for date estimation. */
 export const SECONDS_PER_BLOCK = 600;

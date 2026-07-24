@@ -8,7 +8,7 @@ import type { WatchEvent } from '@/lib/templateWatch/types';
 function noteText(event: WatchEvent): string {
   const url = typeof window !== 'undefined' ? window.location.origin : '';
   if (event.type === 'first_clean_non_signaling') {
-    return `TEMPLATE WATCH: first clean non-signaling block from ${event.pool} at height ${event.height}. ${url}`;
+    return `TEMPLATE WATCH: first BIP-110-compliant non-signaling block from ${event.pool} at height ${event.height}. ${url}`;
   }
   if (event.type === 'first_signaling') {
     return `TEMPLATE WATCH: first signaling block from ${event.pool} at height ${event.height}. ${url}`;

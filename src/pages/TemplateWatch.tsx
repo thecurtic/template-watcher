@@ -16,7 +16,7 @@ import {
 
 export default function TemplateWatch() {
   useSeoMeta({
-    title: 'Template Watch — BIP-110 Consensus Observability',
+    title: 'Template Watcher — BIP-110 Consensus Observability',
     description:
       'Which mining pools produce BIP-110-compliant block templates without signaling for the fork? A neutral measurement dashboard.',
   });
@@ -56,12 +56,12 @@ export default function TemplateWatch() {
                 <Activity className="h-5 w-5 text-[var(--tw-accent)]" />
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-[var(--tw-fg)] sm:text-3xl">
-                Template&nbsp;Watch
+                Template&nbsp;Watcher
               </h1>
             </div>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--tw-muted)]">
               A neutral measurement of the BIP-110 soft fork debate: which mining pools
-              produce compliant ("clean") block templates{' '}
+              produce BIP-110-compliant block templates{' '}
               <span className="text-[var(--tw-fg)]">without signaling</span> for the fork —
               the leading indicator of a quiet position change.
             </p>

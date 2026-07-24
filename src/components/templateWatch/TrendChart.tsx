@@ -78,7 +78,7 @@ export function TrendChart({
                     : 'text-[var(--tw-muted)] hover:text-[var(--tw-fg)]',
                 ].join(' ')}
               >
-                {m === 'clean' ? 'Clean share' : 'Signaling share'}
+                {m === 'clean' ? 'BIP-110 compliant share' : 'Signaling share'}
               </button>
             ))}
           </div>
@@ -166,7 +166,7 @@ export function TrendChart({
           </ResponsiveContainer>
         )}
         <p className="mt-3 text-xs text-[var(--tw-muted)]">
-          {activeMetric === 'clean' ? 'Clean-template' : 'Signaling'} share per day for
+          {activeMetric === 'clean' ? 'BIP-110-compliant template' : 'Signaling'} share per day for
           pools ≥1% of analyzed blocks (others aggregated). Dashed marker estimates the
           mandatory signaling height by date.
         </p>

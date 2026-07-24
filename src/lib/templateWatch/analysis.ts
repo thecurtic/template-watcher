@@ -249,7 +249,7 @@ export function computeWatchEvents(
         height: b.height,
         timestamp: b.timestamp,
         severity: 'warning',
-        message: `First clean non-signaling block from ${b.pool}`,
+        message: `First BIP-110-compliant non-signaling block from ${b.pool}`,
       });
     }
   }
@@ -290,7 +290,7 @@ export function computeWatchEvents(
               height: 0,
               timestamp: new Date(keys[i]).getTime() / 1000,
               severity: 'warning',
-              message: `${pool} clean-template share jumped ${Math.round(from)}→${Math.round(to)}% day-over-day`,
+              message: `${pool} BIP-110-compliant template share jumped ${Math.round(from)}→${Math.round(to)}% day-over-day`,
               detail: { from: Math.round(from), to: Math.round(to) },
             });
           }

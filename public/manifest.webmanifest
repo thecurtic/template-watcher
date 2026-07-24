@@ -1,6 +1,6 @@
 {
-  "name": "Template Watch — BIP-110 Consensus Observability",
-  "short_name": "Template Watch",
+  "name": "Template Watcher — BIP-110 Consensus Observability",
+  "short_name": "Template Watcher",
   "description": "Which mining pools produce BIP-110-compliant block templates without signaling for the fork? A neutral measurement dashboard.",
   "start_url": "/",
   "display": "standalone",

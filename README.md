@@ -3,7 +3,7 @@
 **A neutral, real-time observability dashboard for the BIP-110 soft fork debate.**
 
 Template Watch answers one question no existing tool answers: **which mining pools are
-producing BIP-110-compliant ("clean") block templates _without signaling_ for the fork** —
+producing BIP-110-compliant block templates _without signaling_ for the fork** —
 the leading indicator that a miner may be quietly positioning to switch sides before the
 mandatory signaling window begins at block height **961,632** (~Aug 7, 2026).
 
@@ -19,16 +19,17 @@ The tone is deliberately neutral measurement, not advocacy. The most likely find
 The dashboard is a single page with three stacked sections in a dark monitoring-console
 aesthetic:
 
-1. **Watch Feed** — a chronological list of notable events derived from the data:
+1. **Watch Feed** — notable events from the last 24 hours (older events fade out and
+   age away, keeping the feed compact):
    - First signaling block from a pool
-   - ⚠ First **clean non-signaling** block from a pool (the tell)
-   - ⚠ Day-over-day jumps in a pool's clean-template share
+   - ⚠ First **BIP-110-compliant non-signaling** block from a pool (the tell)
+   - ⚠ Day-over-day jumps in a pool's BIP-110-compliant template share
    - When nothing is happening, a calm "No positioning detected" state with a countdown of
      blocks remaining until height 961,632.
-2. **Pool Matrix** — one row per pool: block count, signaling %, clean %, and a highlighted
-   "clean but not signaling" column. Pools under 1% of analyzed blocks collapse into "Other".
-3. **Trend** — a per-day line chart of clean-template (or signaling) share per pool, with a
-   dashed marker for the estimated mandatory-signaling date. Toggle the y-axis between clean
+2. **Pool Matrix** — one row per pool: block count, signaling %, BIP-110 compliant %, and a highlighted
+   "compliant but not signaling" column. Pools under 1% of analyzed blocks collapse into "Other".
+3. **Trend** — a per-day line chart of BIP-110-compliant template (or signaling) share per pool, with a
+   dashed marker for the estimated mandatory-signaling date. Toggle the y-axis between compliant
    share and signaling share.
 
 ## Data source
@@ -63,13 +64,13 @@ we validate against (`server/src/validate.ts`). Pool attribution uses the open
 The app auto-discovers the violation field on the first fetched block (case-insensitively
 scanning for `bip110`, `violation`, `violating`, `reduced`). It resolves to
 `extras.bip110ViolationCount`. If no violation field is exposed, the app degrades
-gracefully into **signaling-only mode** and hides the clean/dirty columns.
+gracefully into **signaling-only mode** and hides the compliance columns.
 
 ### Definitions
 
 - **signaling**: `(version & 0xE0000000) === 0x20000000 && (version & 0x10) !== 0`
   (BIP9 version prefix **and** bit 4 set), computed with unsigned 32-bit math.
-- **clean**: `violationCount === 0` for that block.
+- **BIP-110 compliant** (`clean` in code): `violationCount === 0` for that block.
 - **OCEAN** is excluded from watch _alerts_ (they filter by policy already) but still appears
   in the matrix.
 - Missing/`null` pool or version fields are counted as **"Unknown"** rather than crashing.
@@ -132,7 +133,7 @@ src/
 │   ├── types.ts        # shared type definitions
 │   ├── constants.ts    # heights, URLs, cache keys, tuning
 │   ├── api.ts          # fetching + localStorage caching
-│   └── analysis.ts     # signaling/clean math, pool stats, events, trend
+│   └── analysis.ts     # signaling/compliance math, pool stats, events, trend
 ├── hooks/
 │   └── useTemplateWatch.ts   # orchestrates fetch → cache → backfill → analyze
 ├── components/templateWatch/

@@ -1,7 +1,21 @@
+import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Radio, TrendingUp } from 'lucide-react';
 import type { WatchEvent } from '@/lib/templateWatch/types';
-import { MANDATORY_SIGNALING_HEIGHT } from '@/lib/templateWatch/constants';
+import {
+  MANDATORY_SIGNALING_HEIGHT,
+  WATCH_EVENT_TTL_MS,
+  WATCH_FEED_MAX_EVENTS,
+} from '@/lib/templateWatch/constants';
 import { NostrPublishButton } from './NostrPublishButton';
+
+/** Events fade during the last quarter of their on-screen lifetime. */
+const FADE_START_MS = WATCH_EVENT_TTL_MS * 0.75;
+
+function eventOpacity(ageMs: number): number {
+  if (ageMs <= FADE_START_MS) return 1;
+  const fadeProgress = (ageMs - FADE_START_MS) / (WATCH_EVENT_TTL_MS - FADE_START_MS);
+  return Math.max(0.3, 1 - fadeProgress * 0.7);
+}
 
 function formatDate(ts: number): string {
   if (!ts) return '';
@@ -79,6 +93,20 @@ export function WatchFeed({
   tip: number | null;
   loading: boolean;
 }) {
+  // Re-render every minute so events age, fade, and expire live — the feed
+  // only shows events from the last 24h (by block timestamp) instead of the
+  // full history, which used to swamp the page.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const visible = events
+    .filter((e) => now - e.timestamp * 1000 < WATCH_EVENT_TTL_MS)
+    .slice(0, WATCH_FEED_MAX_EVENTS);
+  const hidden = events.length - visible.length;
+
   return (
     <section aria-labelledby="watch-feed-heading" className="space-y-5">
       <div className="flex items-center justify-between">
@@ -93,7 +121,7 @@ export function WatchFeed({
         </span>
       </div>
 
-      {events.length === 0 ? (
+      {visible.length === 0 ? (
         loading && totalBlocks === 0 ? (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
@@ -108,13 +136,14 @@ export function WatchFeed({
         )
       ) : (
         <ul className="space-y-3">
-          {events.map((event) => {
+          {visible.map((event) => {
             const isWarn = event.severity === 'warning';
             return (
               <li
                 key={event.id}
+                style={{ opacity: eventOpacity(now - event.timestamp * 1000) }}
                 className={[
-                  'flex flex-col gap-3 rounded-xl border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between',
+                  'tw-fade-in flex flex-col gap-3 rounded-xl border p-4 transition-opacity duration-1000 sm:flex-row sm:items-center sm:justify-between',
                   isWarn
                     ? 'border-[var(--tw-warn)]/40 bg-[var(--tw-warn)]/5'
                     : 'border-[var(--tw-border)] bg-[var(--tw-bg-elev)]',
@@ -141,6 +170,12 @@ export function WatchFeed({
             );
           })}
         </ul>
+      )}
+      {hidden > 0 && (
+        <p className="tw-tnum text-xs text-[var(--tw-muted)]">
+          {hidden.toLocaleString()} more event{hidden === 1 ? '' : 's'} hidden (feed
+          shows the {WATCH_FEED_MAX_EVENTS} most recent from the last 24 hours)
+        </p>
       )}
     </section>
   );
