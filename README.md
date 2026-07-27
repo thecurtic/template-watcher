@@ -1,4 +1,4 @@
-# Template Watch
+# Template Watcher
 
 **A neutral, real-time observability dashboard for the BIP-110 soft fork debate.**
 
@@ -7,8 +7,7 @@ producing BIP-110-compliant block templates _without signaling_ for the fork** â
 the leading indicator that a miner may be quietly positioning to switch sides before the
 mandatory signaling window begins at block height **961,632** (~Aug 7, 2026).
 
-The tone is deliberately neutral measurement, not advocacy. The most likely finding is
-"no positioning detected" â€” and that empty state is treated as the headline, not an error.
+The tone is deliberately neutral measurement, not advocacy.
 
 [![Edit with Shakespeare](https://shakespeare.diy/badge.svg)](https://shakespeare.diy/clone?url=https%3A%2F%2Fgithub.com%2Fthecurtic%2Ftemplate-watcher.git)
 
