@@ -1,11 +1,20 @@
 # Template Watcher
 
-**A neutral, real-time observability dashboard for the BIP-110 soft fork debate.**
+**A neutral observability dashboard for the BIP-110 soft fork debate.**
 
-Template Watch answers one question no existing tool answers: **which mining pools are
+> **Status (October 2026): concluded.** The event this dashboard was built to watch has
+> come and gone. BIP-110's mandatory-signaling window opened at block **961,632**
+> (Aug 7, 2026) with roughly 2.5% of blocks signaling against a 55% lock-in threshold.
+> Enforcing nodes rejected the first non-signaling block and stalled on a minority
+> branch; the main chain was unaffected and the BIP is now listed as **Closed**. No
+> positioning was detected before the window. The repo stays up as a historical record
+> of the method and data; the live instance's index ends shortly after height 961,632
+> and is not being extended.
+
+Template Watcher answered one question no existing tool answered: **which mining pools were
 producing BIP-110-compliant block templates _without signaling_ for the fork** —
-the leading indicator that a miner may be quietly positioning to switch sides before the
-mandatory signaling window begins at block height **961,632** (~Aug 7, 2026).
+the leading indicator that a miner might be quietly positioning to switch sides before the
+mandatory signaling window began at block height **961,632**.
 
 The tone is deliberately neutral measurement, not advocacy.
 
@@ -24,11 +33,11 @@ aesthetic:
    - ⚠ First **BIP-110-compliant non-signaling** block from a pool (the tell)
    - ⚠ Day-over-day jumps in a pool's BIP-110-compliant template share
    - When nothing is happening, a calm "No positioning detected" state with a countdown of
-     blocks remaining until height 961,632.
+     blocks remaining until height 961,632 (now reads zero, since the window has passed).
 2. **Pool Matrix** — one row per pool: block count, signaling %, BIP-110 compliant %, and a highlighted
    "compliant but not signaling" column. Pools under 1% of analyzed blocks collapse into "Other".
 3. **Trend** — a per-day line chart of BIP-110-compliant template (or signaling) share per pool, with a
-   dashed marker for the estimated mandatory-signaling date. Toggle the y-axis between compliant
+   dashed marker at the mandatory-signaling date. Toggle the y-axis between compliant
    share and signaling share.
 
 ## Data source
@@ -44,7 +53,8 @@ API on the same origin (`/api/*`):
 
 The index reaches back to height **938,781** (March 1, 2026 — the first
 BIP-110-signaling block, from OCEAN / Barefoot Mining, was mined later that day at
-height 938,903).
+height 938,903) and forward to just past the window opening at 961,632, covering the
+whole run-up that mattered.
 
 ### Credit
 
@@ -146,6 +156,13 @@ src/
 └── pages/
     └── TemplateWatch.tsx      # the single dashboard page (mounted at "/")
 ```
+
+## License
+
+This repository is licensed under the **GNU Affero General Public License v3.0** — see
+[`LICENSE`](LICENSE). The violation checker in `server/src/bip110.ts` is a port of
+AGPL-3.0 code (see [Credit](#credit)), and the rest of the project is released under the
+same license so the whole thing is consistent.
 
 ## Disclaimer
 
