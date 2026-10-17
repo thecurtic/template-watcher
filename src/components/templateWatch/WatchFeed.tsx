@@ -73,7 +73,9 @@ function EmptyState({
       {remaining !== null && (
         <div className="tw-tnum mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--tw-border)] bg-[var(--tw-bg-elev)] px-4 py-1.5 text-xs text-[var(--tw-muted)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--tw-accent)]" />
-          {remaining.toLocaleString()} blocks until mandatory signaling ({MANDATORY_SIGNALING_HEIGHT.toLocaleString()})
+          {remaining > 0
+            ? `${remaining.toLocaleString()} blocks until mandatory signaling (${MANDATORY_SIGNALING_HEIGHT.toLocaleString()})`
+            : `mandatory signaling window closed (opened at ${MANDATORY_SIGNALING_HEIGHT.toLocaleString()})`}
         </div>
       )}
     </div>
